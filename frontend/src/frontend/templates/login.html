@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign in · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <p class="eyebrow">Server administration</p>
+  <h1>{{ icon('account') }}Sign in</h1>
+  <p class="muted">Use your {{ app_name }} account to continue.</p>
+  {% if session_notice %}<div class="alert warning" role="status">Your session has expired or sign-in is required. Please sign in to continue.</div>{% endif %}
+  {% if cookie_warning %}<div class="alert warning" role="alert">{{ cookie_warning }}</div>{% endif %}
+  {% if error %}<div class="alert error" role="alert">{{ error }}</div>{% endif %}
+  {% if pending_mfa %}
+  <form data-webauthn-login><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p>Verify your FIDO2 security key to finish signing in. Your authenticator may ask for its PIN or biometrics.</p>
+    <button type="submit">Use security key</button><p data-key-status role="status"></p>
+  </form><a href="/login?restart=1">Use password again</a>
+  <script src="{{ url_for('static', path='/security_keys.js').include_query_params(v=static_version) }}" defer></script>
+  {% else %}<form method="post" action="/login">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ return_to|default('/') }}">
+    <label for="username">Username</label>
+    <input id="username" name="username" autocomplete="username" required autofocus>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+  </form>{% endif %}
+</section>
+{% endblock %}
+

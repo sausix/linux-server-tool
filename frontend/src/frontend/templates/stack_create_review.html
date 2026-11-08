@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Review stack · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}Review stack</h1>
+  {% include 'permission.html' %}
+  {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+  {% if assessment %}
+  <p>Directory: <code>{{ assessment.directory }}</code> · Compose definition: <code>{{ assessment.main_file }}</code></p>
+  <table><thead><tr><th>File</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody>
+  {% for file in assessment.files %}<tr><td>{{ file.path }}</td><td>{{ file.size }}</td><td><code>{{ file.sha256 }}</code></td></tr>{% endfor %}
+  </tbody></table>
+  <p class="muted">Creates a new dedicated directory. No existing files are replaced and no containers are started. The stack name is checked again on confirmation.</p>
+  {% for warning in assessment.assessment.warnings %}<p class="alert warning">{{ warning }}</p>{% endfor %}
+  {% endif %}
+  {% if confirmation %}<form method="post" action="/docker/stack-create/confirm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirmation" value="{{ confirmation }}">
+    <button type="submit">Create stack</button>
+  </form>{% endif %}
+  <a href="/docker/stack-create/options?name={{ stack_name|urlencode }}">Back to definition</a><a href="/docker/stacks">Cancel</a>
+</section>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Delete images · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · Images</p>
+  <h1>{{ icon('images') }}{{ 'Deletion result' if result.applied else 'Confirm image deletion' }}</h1>
+{% include 'permission.html' %}
+  {% for error in result.errors %}<p class="alert error" role="alert">{{ error }}</p>{% endfor %}
+  {% if result.deleted %}<p class="alert success">Deleted {{ result.deleted|length }} image(s).</p>{% endif %}
+  {% if result['items'] %}
+  <table><thead><tr><th>Image</th><th>ID</th><th>Tags</th></tr></thead><tbody>
+    {% for item in result['items'] %}<tr><td>{% if item.id in result.deleted %}{{ item.name }}{% else %}<a href="/docker/images/detail?{{ {'image': item.id}|urlencode }}">{{ item.name }}</a>{% endif %}</td><td>{{ item.id }}</td><td>{{ item.tags|join(', ') or 'None' }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% endif %}
+  {% if confirmation %}
+  <p>These exact images and their tags will be removed. References and tags are checked again before deletion. No force deletion or automatic parent-image pruning is used.</p>
+  <form method="post" action="{{ request.url_for('image_deletion') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="confirmation" value="{{ confirmation }}">
+    <button type="submit">Confirm Delete</button>
+  </form>
+  {% endif %}
+  <a href="/docker/images">{{ 'Back to images' if result.applied else 'Cancel' }}</a>
+</section>
+{% endblock %}

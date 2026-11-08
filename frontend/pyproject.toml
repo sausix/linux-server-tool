@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lsdfm-web"
+license = "MIT"
+version = "0.1.0"
+description = "LSDFM web frontend"
+requires-python = ">=3.12"
+dependencies = [
+  "lsdfm-common==0.1.0",
+  "fastapi>=0.115,<1",
+  "itsdangerous>=2.2,<3",
+  "jinja2>=3.1,<4",
+  "pydantic-settings>=2.6,<3",
+  "python-multipart>=0.0.12,<1",
+  "pwdlib[argon2]>=0.2,<1",
+  "sqlalchemy>=2.0,<3",
+  "uvicorn[standard]>=0.32,<1",
+  "webauthn>=2.8,<3",
+]
+
+[project.scripts]
+frontend = "frontend.cli:main"
+lsdfm-web = "frontend.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/frontend"]

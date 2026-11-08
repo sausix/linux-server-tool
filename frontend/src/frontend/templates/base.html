@@ -1,0 +1,84 @@
+<!doctype html>
+{% from 'ui/macros.html' import icon with context %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="/assets/component-theme.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/app.css').include_query_params(v=static_version) }}">
+    {% if user %}<script src="{{ url_for('static', path='/session.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+    {% if user and not settings_mode %}<script src="{{ url_for('static', path='/live_refresh.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+    {% if user %}<script src="{{ url_for('static', path='/host_paths.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+    {% if user %}<script src="{{ url_for('static', path='/icons.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+    {% if user and component_support.docker %}<script src="{{ url_for('static', path='/docker_links.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+  </head>
+  <body {% if user %}class="app-shell" data-host-paths="{{ daemon_status.get('host_paths', {})|tojson|forceescape }}" data-live-refresh="{{ 'true' if live_refresh else 'false' }}" data-session-renew-seconds="{{ session_renew_seconds }}" data-icons-url="{{ url_for('static', path='/icons.svg').include_query_params(v=static_version) }}"{% endif %}>
+    <header class="site-header">
+      <a class="brand" href="/">{{ app_name }}</a>
+      {% if user %}
+        <nav aria-label="Account navigation">
+          {% if not settings_mode %}<form action="/api/session/refresh" method="post" data-refresh-toggle>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="refresh-badge" aria-pressed="{{ 'true' if live_refresh else 'false' }}">{{ 'Live refresh' if live_refresh else 'No refresh' }}</button>
+            <span data-refresh-error role="alert" hidden></span>
+          </form>
+          {% endif %}<a href="/settings/user" {% if settings_mode %}aria-current="page"{% endif %}>Settings</a>
+          <form action="/logout" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="link-button" type="submit">Sign out</button>
+          </form>
+        </nav>
+      {% endif %}
+    </header>
+    {% if user %}
+    <aside class="tool-sidebar" aria-label="{{ 'Settings' if settings_mode else 'Tools' }}">
+      {% if settings_mode %}
+      <h2>Settings</h2><a href="/settings/user" {% if request.url.path == '/settings/user' %}aria-current="page"{% endif %}>{{ icon('account') }} User</a>
+      {% if user.is_admin and not profile_restricted %}<a href="/settings/security" {% if request.url.path == '/settings/security' %}aria-current="page"{% endif %}>{{ icon('security') }} Security</a>{% endif %}
+      {% if not profile_restricted %}<a href="/">{{ icon('dashboard') }} Back to application</a>{% endif %}
+      {% else %}
+      <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>{{ icon('dashboard') }} Dashboard</a>
+      {% if daemon_status.available and daemon_status.get('system_access', 'readonly') != 'disabled' %}
+      <h2 class="nav-category"><a href="/system" {% if request.url.path == '/system' %}aria-current="page"{% endif %}>{{ icon('system') }} System control</a></h2>
+      <a class="nav-subcategory" href="/system/configuration" {% if request.url.path == '/system/configuration' %}aria-current="page"{% endif %}>{{ icon('configuration') }} Configuration</a>
+      {% if daemon_status.features.get('sysctl') != 'disabled' %}
+      <a class="nav-subcategory" href="/system/sysctl" {% if request.url.path == '/system/sysctl' %}aria-current="page"{% endif %}>{{ icon('sysctl') }} Sysctl</a>
+      {% endif %}
+      {% endif %}
+      {% if daemon_status.available and daemon_status.network_access != 'disabled' and daemon_status.network_access %}
+      <h2 class="nav-category"><a href="/network" {% if request.url.path == '/network' %}aria-current="page"{% endif %}>{{ icon('networks') }} {{ network_title }}</a></h2>
+      <a class="nav-subcategory" href="/network/configuration" {% if request.url.path == '/network/configuration' %}aria-current="page"{% endif %}>{{ icon('configuration') }} Configuration</a>
+      {% for page in ['interfaces', 'routing', 'firewall'] %}
+      {% if daemon_status.features.get(page) != 'disabled' %}
+      <a class="nav-subcategory" href="/network/{{ page }}" {% if request.url.path == '/network/' ~ page %}aria-current="page"{% endif %}>{{ icon(page) }} {{ page|title }}</a>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+      {% if daemon_status.available and daemon_status.docker_access != 'disabled' and daemon_status.docker_access %}
+      <h2 class="nav-category"><a href="/docker" {% if request.url.path == '/docker' %}aria-current="page"{% endif %}>{{ icon('docker') }} {{ docker_title }}</a></h2>
+      <a class="nav-subcategory" href="/docker/configuration" {% if request.url.path == '/docker/configuration' %}aria-current="page"{% endif %}>{{ icon('configuration') }} Configuration</a>
+      <a class="nav-subcategory" href="/docker/containers" {% if request.url.path.startswith('/docker/containers') %}aria-current="page"{% endif %}>{{ icon('containers') }} Containers</a>
+      <a class="nav-subcategory" href="/docker/images" {% if request.url.path.startswith('/docker/images') %}aria-current="page"{% endif %}>{{ icon('images') }} Images</a>
+      <a class="nav-subcategory" href="/docker/volumes" {% if request.url.path.startswith('/docker/volumes') %}aria-current="page"{% endif %}>{{ icon('volumes') }} Volumes</a>
+      <a class="nav-subcategory" href="/docker/labels" {% if request.url.path == '/docker/labels' %}aria-current="page"{% endif %}>{{ icon('labels') }} Labels</a>
+      <details class="stack-nav" data-category="docker" {% if request.url.path.startswith('/docker/stacks') %}open{% endif %}>
+        <summary><a href="/docker/stacks" {% if request.url.path == '/docker/stacks' %}aria-current="page"{% endif %}>{{ icon('stacks') }} Stacks</a></summary>
+        <ul data-stack-menu><li class="muted">Expand to load stacks.</li></ul>
+      </details>
+      {% endif %}
+      {% if not daemon_status.available %}<p class="muted">Service unavailable</p>{% endif %}
+      {% endif %}
+    </aside>
+    {% endif %}
+    <main class="{% if user %}with-sidebar{% endif %}" data-category="{{ 'system' if request.url.path == '/system' or request.url.path.startswith('/system/') else 'network' if request.url.path == '/network' or request.url.path.startswith('/network/') else 'docker' if request.url.path == '/docker' or request.url.path.startswith('/docker/') else 'general' }}">
+      {% if user and not hide_search and not action and request.url.path != '/password' and daemon_status.available and (show_search or (daemon_status.network_access and daemon_status.network_access != 'disabled')) %}
+        {% include 'search.html' %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    {% if user %}<script src="{{ url_for('static', path='/search.js') }}" defer></script>{% endif %}
+    {% if user and not settings_mode and daemon_status.available and daemon_status.docker_access and daemon_status.docker_access != 'disabled' %}<script src="{{ url_for('static', path='/stacks.js').include_query_params(v=static_version) }}" defer></script>{% endif %}
+  </body>
+</html>
+

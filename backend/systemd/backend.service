@@ -1,0 +1,47 @@
+[Unit]
+Description=LSDFM privileged system service
+Documentation=file:///opt/lsdfm/backend/docs/backend/README.md
+After=local-fs.target network.target
+
+[Service]
+Type=simple
+User=root
+Group=lsdfm
+RuntimeDirectory=lsdfm
+RuntimeDirectoryMode=0750
+StateDirectory=lsdfm lsdfm/backend lsdfm/compose
+StateDirectoryMode=0750
+EnvironmentFile=-/etc/lsdfm/backend.env
+WorkingDirectory=/var/lib/lsdfm/backend
+ExecStart=/opt/lsdfm/backend/.venv/bin/backend
+Restart=on-failure
+RestartSec=2s
+TimeoutStopSec=15s
+UMask=0077
+
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=-/etc/systemd/network
+ReadWritePaths=-/etc/network/interfaces.d
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+StandardOutput=journal
+StandardError=journal
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service @network-io
+
+[Install]
+WantedBy=multi-user.target

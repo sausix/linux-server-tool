@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Security · Settings · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Settings · Security</p><h1>{{ icon('security') }}Security</h1>
+<p class="muted">Read-only configuration assessment · {{ checked_at }}. Findings do not change settings or prove that the deployment is secure.</p>
+<p><a class="button secondary" href="/settings/security">Run checks again</a></p>
+<div class="security-summary" aria-label="Assessment summary">{% for status, count in summary.items() %}<span class="security-status security-status-{{ status }}">{{ status|capitalize }}: {{ count }}</span>{% endfor %}</div>
+{% for title, checks in [('Frontend', frontend_checks), ('Daemon', daemon_checks)] %}
+<section class="card"><h2>{{ title }}</h2>
+{% for check in checks %}<article class="security-check security-check-{{ check.status }}">
+<h3><span class="security-status security-status-{{ check.status }}">{{ check.status|capitalize }}</span> {{ check.title }}</h3>
+<p>{{ check.observation }}</p><p class="muted"><strong>Recommendation:</strong> {{ check.recommendation }}</p>
+</article>{% endfor %}
+</section>{% endfor %}
+{% endblock %}

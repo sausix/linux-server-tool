@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ action|title }} address · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Interfaces · {{ interface }}</p>
+  <h1>{{ icon('interfaces') }}{{ {'delete': 'Confirm deletion', 'add': 'Add address', 'persist': 'Make persistent', 'remove-config': 'Remove from configuration'}[action] }}</h1>
+{% include 'permission.html' %}
+  {% if action in ['persist', 'remove-config'] %}
+  <p class="alert warning">This changes saved configuration only. Runtime addresses remain unchanged. No network reload is performed.</p>
+  {% else %}<p class="alert warning">This changes the runtime address only. Persistent configuration remains in place and may restore or remove the address later. Connectivity may be interrupted.</p>{% endif %}
+  {% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+  <form method="post" data-address-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="interface" value="{{ interface }}">
+    {% if confirmation %}<input type="hidden" name="confirmation" value="{{ confirmation }}">{% endif %}
+    <label for="address">{{ 'Address to delete' if action == 'delete' else 'Interface address (prefix required)' }}</label>
+    <input id="address" name="address" value="{{ info.address if info else address }}" required
+           {% if confirmation %}readonly{% endif %} placeholder="192.0.2.10/24 or 2001:db8::10/64"
+           autocomplete="off" spellcheck="false" aria-describedby="address-hint">
+    <p id="address-hint" class="muted">A prefix is mandatory for interface addresses: /0–32 for IPv4, /0–128 for IPv6. Gateway and single-host fields must not include a prefix.</p>
+    <p id="address-error" class="error" role="alert"></p>
+    {% if confirmation %}<table id="subnet-info" aria-label="Subnet information">
+      <tbody>{% if info %}{% for key in ['family', 'address_type', 'network', 'netmask', 'first', 'last', 'total_addresses', 'usable_addresses', 'broadcast'] %}
+        {% if info[key] is not none %}<tr><th>{{ key|replace('_', ' ')|title }}</th><td>{{ info[key] }}</td></tr>{% endif %}
+      {% endfor %}{% endif %}</tbody>
+    </table>
+    {% if info %}<p class="muted">{{ info.note }}</p>{% endif %}{% endif %}
+    {% if configuration_preview %}<p>Configuration: {{ configuration_preview.target }}</p><pre>{{ configuration_preview.diff }}</pre>{% endif %}
+    {% if confirmation %}
+      <button type="submit">{{ {'delete': 'Confirm Delete', 'add': 'Confirm Add', 'persist': 'Confirm Make persistent', 'remove-config': 'Confirm Remove from configuration'}[action] }}</button>
+    {% elif action == 'add' %}<button type="submit">Review address</button>{% endif %}
+    <a href="/network/interfaces?interface.name={{ interface|urlencode }}">Cancel</a>
+  </form>
+</section>
+<script src="{{ url_for('static', path='/address.js') }}" defer></script>
+{% endblock %}

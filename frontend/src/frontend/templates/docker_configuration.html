@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% from 'docker_macros.html' import display %}
+{% block title %}Docker configuration · {{ app_name }}{% endblock %}
+{% macro config_file(file) %}
+<section class="card docker-section">
+  <h2>{{ display_path(file.path) }}</h2>
+  {% if file.exists is sameas false %}<p class="muted">File does not exist.</p>
+  {% elif file.error %}<p class="alert warning">{{ display_path(file.error) }}</p>
+  {% else %}
+    <p class="muted">Current file contents; not proof these settings were loaded. Sensitive values are redacted.</p>
+    <table>
+      {% for key, value in file.settings.items() %}
+      <tr><th>{{ key }}</th><td><pre>{{ value|tojson(indent=2) }}</pre></td></tr>
+      {% else %}<tr><td>No settings in this file.</td></tr>{% endfor %}
+    </table>
+  {% endif %}
+</section>
+{% endmacro %}
+{% block content %}
+<p class="eyebrow">Docker · Configuration</p>
+<h1>{{ icon('configuration') }}Docker configuration</h1>
+{% include 'permission.html' %}
+{% for error in overview.errors %}<p class="alert warning">{{ error }}</p>{% endfor %}
+<a href="/docker/configuration" class="button">Refresh</a>
+<section class="card docker-section">
+  <h2>Client connection settings</h2>
+  <table>
+    {% for key, label in [('endpoint', 'backend endpoint'), ('api_version_setting', 'API version setting'), ('tls_verify', 'TLS verification (when TLS is used)'), ('client_certificate', 'Client certificate configured')] %}
+    {% if key in overview %}<tr><th>{{ label }}</th><td>{{ display(overview[key]) }}</td></tr>{% endif %}
+    {% endfor %}
+  </table>
+</section>
+<section class="card docker-section">
+  <h2>Binding sources on the backend host</h2>
+  {% if configuration %}
+    {% for warning in configuration.warnings %}<p class="alert warning">{{ display_path(warning) }}</p>{% endfor %}
+    {% if configuration.local %}
+    <table>
+      {% for key, value in configuration.systemd.items() %}
+      <tr><th>systemd · {{ key }}</th><td><pre>{{ value|tojson(indent=2) }}</pre></td></tr>
+      {% endfor %}
+      {% for process in configuration.processes %}
+      <tr><th>Running dockerd PID {{ process.pid }}</th><td>
+        <p>Command-line hosts: {{ process.hosts|join(', ') or 'No explicit -H/--host' }}</p>
+        <p>Configuration file argument: {{ process.config_file or 'Not explicitly set' }}</p>
+        {% if 'fd://' in process.hosts %}<p>fd:// uses socket activation; see docker.socket Listen above.</p>{% endif %}
+      </td></tr>
+      {% else %}<tr><td>No readable running dockerd process found.</td></tr>{% endfor %}
+    </table>
+    <p class="muted">ExecStart shows configured systemd arguments; /proc shows running arguments. Binding flags and daemon.json hosts are duplicate settings, not a precedence mechanism.</p>
+    {% endif %}
+  {% else %}<p class="muted">Local configuration evidence unavailable.</p>{% endif %}
+</section>
+{% if configuration and configuration.daemon_json %}{{ config_file(configuration.daemon_json) }}{% endif %}
+{% if configuration %}{% for file in configuration.additional_configs %}{{ config_file(file) }}{% endfor %}{% endif %}
+<section class="card docker-section">
+  <h2>Engine configuration reported by the endpoint</h2>
+  {% if overview.info %}
+  <table>{% for key, value in overview.info.items() %}
+    <tr><th>{{ key }}</th><td>{{ display(value) }}{% if key == 'MemTotal' %} bytes{% endif %}</td></tr>
+  {% endfor %}</table>
+  {% else %}<p class="muted">Not available from the endpoint.</p>{% endif %}
+</section>
+{% endblock %}

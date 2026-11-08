@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ action|title }} stack · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}{{ action|title }} stack</h1>
+{% include 'permission.html' %}
+  {% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+  {% if plan %}<p>{{ plan.description }}</p><p>Backend: {{ plan.backend }}</p><p>Saved source: {{ display_path(plan.source) }}</p>{% for warning in plan.warnings %}<p class="alert warning">{{ warning }}</p>{% endfor %}{% endif %}
+  {% if plan and plan.definition_diff %}
+  <h2>Definition changes</h2><p>Baseline evidence: {{ plan.baseline_evidence }}. An observed baseline is not proof of an externally deployed configuration.</p>
+  <pre>{{ plan.definition_diff }}</pre>
+  {% endif %}
+  {% if confirmation %}<form method="post" action="{{ request.url_for('confirm_action') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirmation" value="{{ confirmation }}"><button type="submit">Confirm {{ action|title }}</button></form>{% endif %}
+  {% if job %}<div id="stack-job" data-id="{{ job.id }}"><p role="status" data-job-status>{{ job.status }}</p><p class="alert error" data-job-error {% if not job.error %}hidden{% endif %}>{{ job.error or '' }}</p></div><script src="{{ url_for('static', path='/stack_job.js') }}" defer></script>{% endif %}
+  <a href="/docker/stacks/{{ kind }}/{{ stack_name }}">Back to stack</a>
+</section>
+{% endblock %}

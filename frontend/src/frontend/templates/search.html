@@ -1,0 +1,19 @@
+<form method="get" action="{{ search_action|default('/network/' ~ view if view else '/network/interfaces') }}"
+      role="search" class="inventory-search" autocomplete="off" data-inventory-search>
+  <div class="search-controls">
+    <div class="search-input-wrap">
+      <label for="inventory-search" class="visually-hidden">Search and filter {{ view|default('interfaces') }}</label>
+      <input id="inventory-search" type="search" name="q" value="{{ search_query }}" class="{{ 'filter-current' if search_query else '' }}"
+             placeholder="Filter {{ view|default('interfaces') }}…" aria-describedby="search-help"
+             autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+             enterkeyhint="search" data-category="{{ view|default('interfaces') }}">
+      <button type="button" class="search-clear" aria-label="Clear filters" title="Clear filters">×</button>
+    </div>
+    <button type="button" class="search-help-toggle" aria-label="Filter help" aria-expanded="false"
+            aria-controls="search-help" title="Filter help">?</button>
+  </div>
+  <div id="search-help" class="search-help" hidden>
+    <p>Enter text or field=value. Combine conditions with spaces (AND). Quote values containing spaces.</p>
+    {% if search_fields %}<p>{{ search_fields|join(' · ') }}</p>{% endif %}
+  </div>
+</form>

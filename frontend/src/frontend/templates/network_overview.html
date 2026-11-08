@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Network · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>{{ icon('networks') }}Network</h1>
+{% include 'permission.html' %}
+{% if daemon_status.features.get('interfaces') != 'disabled' %}
+<section id="network-view" data-view="overview" data-live="{{ 'true' if daemon_status.events else 'false' }}">
+  <p id="live-status" class="visually-hidden" role="status">Loading interfaces…</p>
+  <p id="load-error" class="error" role="alert" hidden></p>
+  <div id="inventory" class="network-overview"></div>
+</section>
+<script src="{{ url_for('static', path='/network.js') }}" defer></script>
+{% else %}<p class="muted">Interface access is disabled in the service.</p>{% endif %}
+{% endblock %}

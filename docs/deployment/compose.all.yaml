@@ -1,0 +1,30 @@
+# Combined deployment; use --project-directory . from the checkout root.
+# Extended file paths are anchored to the checkout root by --project-directory.
+services:
+  frontend:
+    extends:
+      file: docs/deployment/compose.web.yaml
+      service: frontend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ${BACKEND_RUN_DIRECTORY:-./lsdfm-run}:/run/lsdfm:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+  backend:
+    extends:
+      file: docs/deployment/compose.daemon.yaml
+      service: backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ${BACKEND_RUN_DIRECTORY:-./lsdfm-run}:/run/lsdfm
+
+volumes:
+  frontend-data:
+    name: ${FRONTEND_DATA_VOLUME:-${COMPOSE_PROJECT_NAME}_frontend-data}
+  backend-state:
+    name: ${BACKEND_STATE_VOLUME:-${COMPOSE_PROJECT_NAME}_backend-state}

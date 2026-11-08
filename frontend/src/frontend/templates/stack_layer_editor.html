@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% from 'docker_macros.html' import stack_controls with context %}
+{% block title %}Compose definition · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+<p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}{{ 'Derive definition' if mode == 'derive' else 'Edit definition' }}</h1>
+{% include 'permission.html' %}
+{{ stack_controls('compose', stack_name, daemon_status.docker_access in ['rw', 'readwrite']) }}
+{% if readonly %}<p class="alert warning">This definition is read-only. Duplicate or derive it to make changes.</p>{% elif mode == 'derive' %}<p>Saving creates a child definition. The parent, Active selection and running containers remain unchanged.</p>{% else %}<p>Changes affect this definition only. Running containers are not restarted.</p>{% endif %}
+{% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+<form method="post" action="/docker/stack-models/{{ stack_name }}/change" data-compose-editor data-draft-key="{{ draft_key }}" data-source-hash="{{ revision }}" data-confirmation="false">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="name" value="{{ stack_name }}" data-stack-name>
+<input type="hidden" name="action" value="{{ 'add' if mode == 'derive' else 'edit' }}"><input type="hidden" name="node" value="{{ node }}">
+<input type="hidden" name="revision" value="{{ revision }}" data-base-input>
+<input type="hidden" name="draft_revision" value="{{ draft_revision or '' }}" data-draft-revision>
+<label for="layer-name">Definition name</label><input id="layer-name" name="label" value="{{ layer_name }}" required maxlength="160" autocomplete="off" {% if readonly %}readonly{% endif %}>
+<label for="layer-definition">Resulting Compose definition (JSON)</label>
+<textarea id="layer-definition" name="definition_text" data-editor-text spellcheck="false" autocomplete="off" required {% if readonly %}readonly{% endif %}>{{ definition_text }}</textarea>
+<p data-draft-status class="draft-status muted" role="status"></p>
+{% if not readonly %}<div class="editor-draft-actions"><button type="button" class="secondary" data-save-draft>Save draft</button><button type="button" class="secondary" data-discard-draft hidden>Discard draft and reload</button><button type="button" class="secondary" data-rebase-draft hidden>Use current hierarchy as base</button></div>
+<button type="submit">Review changes</button>{% endif %}<a href="/docker/stacks/compose/{{ stack_name }}">Cancel</a>
+</form>
+</section>
+{% if not readonly %}<script src="{{ url_for('static', path='/compose_editor.js') }}" defer></script>{% endif %}
+{% endblock %}

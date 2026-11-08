@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'New definition' if definition_management else 'Add stack' }} · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · Stacks</p><h1>{{ icon('stacks') }}{{ 'New Definition' if definition_management else 'Add stack' }}</h1>
+  {% include 'permission.html' %}
+  {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+  {% if step == 'name' %}
+  <form method="post" action="/docker/stack-create/choose">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="stack-name">Stack name</label>
+    <input id="stack-name" name="name" value="{{ stack_name }}" required pattern="[a-z0-9][a-z0-9_-]{0,127}" autocomplete="off">
+    <p class="muted">Choose a free name using lowercase letters, digits, underscores or hyphens. A dedicated stack directory will be created after confirmation.</p>
+    <button type="submit">Continue</button><a href="/docker/stacks">Cancel</a>
+  </form>
+  {% else %}
+  <p>Stack: <strong>{{ stack_name }}</strong>{% if not definition_management %} · Directory: <code>{{ directory }}</code>{% endif %}</p>
+  <form method="post" enctype="multipart/form-data" action="{% if definition_management %}/docker/stack-models/{{ stack_name }}/import{% else %}/docker/stack-create/review{% endif %}" data-stack-create data-compose-editor data-draft-key="{{ draft_key }}" data-source-hash="{{ revision if definition_management else 'new' }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="name" value="{{ stack_name }}" data-stack-name>
+    <input type="hidden" name="revision" value="{{ revision if definition_management else '' }}" data-base-input>
+    {% if definition_management %}<label for="definition-name">Definition name</label><input id="definition-name" name="label" value="{{ layer_name }}" required maxlength="160" autocomplete="off">{% endif %}
+    <input type="hidden" name="draft_revision" value="" data-draft-revision>
+    <fieldset><legend>Definition source</legend>
+      <label><input type="radio" name="mode" value="upload"> Upload a Compose file or archive</label>
+      <label><input type="radio" name="mode" value="paste" checked> Paste text or start an empty definition</label>
+      <label><input type="radio" name="mode" value="builder" disabled> Stack Builder · planned (database-backed virtual stacks)</label>
+      <label><input type="radio" name="mode" value="templates" disabled> Stack Templates · planned</label>
+    </fieldset>
+    <div data-mode-panel="upload" hidden>
+      <label for="upload">Compose file or archive</label><input id="upload" type="file" name="upload" accept=".yaml,.yml,.json,.zip,.tar,.gz,.tgz,.bz2,.xz">
+      <p class="muted">Up to 64 regular files and 4 MiB total. ZIP and TAR archives are supported. Paths are preserved; links and traversal are rejected. Uploads are retained only until confirmation expires.</p>
+    </div>
+    <div data-mode-panel="paste">
+      <label for="definition">Compose definition (YAML or JSON)</label>
+      <textarea id="definition" name="definition_text" data-editor-text spellcheck="false" autocomplete="off">{{ definition_text }}</textarea>
+      <p data-draft-status class="draft-status muted" role="status"></p>
+      <div class="editor-draft-actions"><button type="button" class="secondary" data-save-draft>Save draft</button><button type="button" class="secondary" data-discard-draft hidden>Discard draft and reload</button><button type="button" class="secondary" data-rebase-draft hidden>Use current definition as base</button></div>
+    </div>
+    <label for="main-file">Main Compose file path</label>
+    <input id="main-file" name="main_file" placeholder="Automatic for uploads; compose.yaml for pasted text" autocomplete="off">
+    <p class="muted">For archives, use a path inside the archive if the main file cannot be detected automatically. Empty text starts with an empty services object. Nothing is deployed when saving {{ 'a definition' if definition_management else 'a stack' }}.</p>
+    <button type="submit">{{ 'Review definition' if definition_management else 'Review stack' }}</button>{% if definition_management %}<a href="/docker/stacks/compose/{{ stack_name }}">Cancel</a>{% else %}<a href="/docker/stack-create">Choose another name</a>{% endif %}
+  </form>
+  <script src="{{ url_for('static', path='/stack_create.js') }}" defer></script>
+  <script src="{{ url_for('static', path='/compose_editor.js') }}" defer></script>
+  {% endif %}
+</section>
+{% endblock %}

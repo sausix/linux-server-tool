@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Duplicate definition · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card"><p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}Duplicate definition</h1>
+{% include 'permission.html' %}
+{% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+{% if current %}
+<p>Copy of <strong>{{ display_path(current.label) }}</strong></p>
+<form method="post" action="/docker/stack-models/{{ stack_name }}/change">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="action" value="duplicate"><input type="hidden" name="node" value="{{ current.node }}">
+<input type="hidden" name="revision" value="{{ current.revision }}">
+<label for="definition-name">Definition name</label><input id="definition-name" name="label" value="{{ suggested_name }}" required maxlength="160" autocomplete="off" autofocus>
+<button type="submit">Review duplicate</button>
+</form>
+{% endif %}
+<a href="/docker/stacks/compose/{{ stack_name }}">Cancel</a></section>
+{% endblock %}

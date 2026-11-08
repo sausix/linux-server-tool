@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lsdfmd"
+license = "MIT"
+version = "0.1.0"
+description = "LSDFM system daemon"
+requires-python = ">=3.12"
+dependencies = ["lsdfm-common==0.1.0", "pydantic-settings>=2.6,<3", "PyYAML>=6.0,<7"]
+
+[project.scripts]
+backend = "backend.daemon:main"
+lsdfmd = "backend.daemon:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/backend"]
+

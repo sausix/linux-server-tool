@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Images · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Docker · Images</p>
+<h1>{{ icon('images') }}{{ 'Image details' if image_reference else 'Images' }}</h1>
+{% include 'permission.html' %}
+<section id="images-view" data-reference="{{ image_reference }}" data-live="{{ 'true' if daemon_status.events else 'false' }}"
+         data-write="{{ 'true' if daemon_status.docker_access in ['rw', 'readwrite'] and user.is_admin and not user.password_change_required() else 'false' }}"
+         data-csrf="{{ csrf_token }}" data-delete-url="{{ request.url_for('image_deletion') }}">
+  <p id="images-status" role="status">Loading images…</p>
+  <p id="images-loading" class="loading-indicator" role="status" hidden><span class="loading-spinner" aria-hidden="true"></span><span>Loading image inventory…</span></p>
+  <p id="images-error" class="error" role="alert" hidden></p>
+  <div id="images-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/images.js') }}" defer></script>
+{% endblock %}

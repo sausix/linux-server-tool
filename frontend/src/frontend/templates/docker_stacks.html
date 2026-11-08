@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ stack_name or 'Stacks' }} · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Docker · Stacks</p>
+<h1 id="stacks-title">{{ icon('stacks') }}{{ stack_name or 'Stacks' }}</h1>
+{% include 'permission.html' %}
+{% set definition_write = daemon_status.docker_access in ['rw', 'readwrite'] and user.is_admin and not user.password_change_required() %}
+<section id="stacks-view" data-definition-read="{{ 'true' if user.is_admin and not user.password_change_required() else 'false' }}" data-definition-write="{{ 'true' if definition_write else 'false' }}" data-kind="{{ stack_kind or '' }}" data-name="{{ stack_name or '' }}" data-live="{{ 'true' if daemon_status.events else 'false' }}">
+  <p id="stacks-status" role="status">Loading stacks…</p>
+  <p id="stacks-error" class="error" role="alert" hidden></p>
+  <div id="stacks-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+{% endblock %}

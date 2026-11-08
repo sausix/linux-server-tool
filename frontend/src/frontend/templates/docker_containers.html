@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Containers · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Docker · Containers</p>
+<h1>{{ icon('containers') }}{{ 'Container details' if container_id else 'Containers' }}</h1>
+{% include 'permission.html' %}
+<section id="containers-view" data-id="{{ container_id }}" data-live="{{ 'true' if daemon_status.events else 'false' }}" data-write="{{ 'true' if daemon_status.docker_access in ['rw', 'readwrite'] and user.is_admin and not user.password_change_required() else 'false' }}">
+  <p id="containers-status" role="status">Loading containers…</p>
+  <p id="containers-error" class="error" role="alert" hidden></p>
+  <div id="containers-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/containers.js').include_query_params(v=static_version) }}" defer></script>
+{% endblock %}

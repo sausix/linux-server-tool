@@ -1,0 +1,3 @@
+{% macro icon(name) -%}
+<svg class="docker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="{{ url_for('static', path='/icons.svg').include_query_params(v=static_version) }}#{{ name }}"></use></svg>
+{%- endmacro %}

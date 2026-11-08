@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from 'docker_macros.html' import stack_controls with context %}
+{% block title %}Compose JSON definition · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · Stacks</p>
+  <h1>{{ icon('stacks') }}Compose JSON definition</h1>
+{% include 'permission.html' %}
+  {% if stack_name and revision is not none %}{{ stack_controls('compose', stack_name, true) }}{% endif %}
+  <p>Save a Compose JSON document in backend's database. This does not deploy containers or change Compose files.</p>
+  {% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+  {% if assessment %}
+    {% for field in assessment.metadata.invalid_fields %}<p class="alert warning">{{ field.field }}: {{ field.reason }}</p>{% endfor %}
+    <p>{{ 'Eligible metadata' if assessment.metadata.eligible else 'Excluded from extended startup' }}. No startup is performed.</p>
+  {% endif %}
+  <form method="post" action="{{ request.url_for('save_definition') }}" data-compose-editor
+        data-draft-key="{{ draft_key }}" data-source-hash="{{ revision if revision is not none else 'new' }}" data-confirmation="{{ 'true' if confirmation else 'false' }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="revision" value="{{ revision if revision is not none else '' }}" data-base-input>
+    <input type="hidden" name="draft_id" value="{{ draft_key }}">
+    <input type="hidden" name="draft_revision" value="{{ draft_revision or '' }}" data-draft-revision>
+    {% if confirmation %}<input type="hidden" name="confirmation" value="{{ confirmation }}">{% endif %}
+    <label for="stack-name">Project name</label>
+    <input id="stack-name" data-stack-name name="name" value="{{ stack_name }}" required pattern="[a-z0-9][a-z0-9_-]{0,127}" {% if revision is not none or confirmation %}readonly{% endif %} autocomplete="off">
+    <label for="definition">Compose definition (JSON)</label>
+    <textarea id="definition" data-editor-text name="definition_text" spellcheck="false" autocomplete="off" required {% if confirmation %}readonly{% endif %}>{{ definition_text }}</textarea>
+    <p data-draft-status class="draft-status muted" role="status"></p>
+    {% if not confirmation %}<div class="editor-draft-actions"><button type="button" class="secondary" data-save-draft>Save draft</button><button type="button" class="secondary" data-discard-draft hidden>Discard draft and reload</button><button type="button" class="secondary" data-rebase-draft hidden>Use current definition as base</button></div>{% endif %}
+    <button type="submit">{{ 'Confirm Save' if confirmation else 'Review definition' }}</button>
+    {% if confirmation %}<button class="secondary" type="submit" name="edit" value="true">Edit again</button>{% endif %}
+    <a href="/docker/stacks">Cancel</a>
+  </form>
+</section>
+<script src="{{ url_for('static', path='/compose_editor.js') }}" defer></script>
+{% endblock %}

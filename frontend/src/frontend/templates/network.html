@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ view|title }} · {{ app_name }}{% endblock %}
+{% block content %}
+<section id="network-view" data-view="{{ view }}" data-live="{{ 'true' if daemon_status.events else 'false' }}"
+         data-extension-topics="{{ extension_topics|tojson|forceescape }}"
+         data-address-write="{{ 'true' if daemon_status.features.get('interfaces') == 'rw' and user.is_admin and not user.password_change_required() else 'false' }}">
+  <p class="eyebrow">{{ 'System control' if view == 'sysctl' else 'Network' }}</p>
+  <h1>{{ icon(view) }}{{ view|title }}</h1>
+{% include 'permission.html' %}
+  <p id="live-status" role="status">Loading inventory…</p>
+  {% if view == 'interfaces' %}
+  <div class="legend"><span class="persistent">● Persistent</span> <span class="drift">● Runtime / differs</span> <span class="muted">● Unknown or dynamic source</span></div>
+  <p class="muted">Address changes affect runtime state. Add and Delete require administrator write access.</p>
+  {% endif %}
+  {% if view == 'sysctl' %}
+  <div class="legend"><span class="persistent">● Matches persistent candidates</span> <span class="drift">● Differs from persistent candidates</span> <span class="muted">● Unknown or ambiguous source</span></div>
+  <p class="muted">Classes: configured = matches persistent candidates; changed = differs from configuration or, if unconfigured, a known build default; default = matches a known build default or is unconfigured with an unknown default. Source details distinguish these cases.</p>
+  {% endif %}
+  <p id="load-error" class="error" role="alert" hidden></p>
+  <div id="inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/ip_subnets.js') }}" defer></script>
+<script src="{{ url_for('static', path='/network.js').include_query_params(v=static_version) }}" defer></script>
+{% endblock %}

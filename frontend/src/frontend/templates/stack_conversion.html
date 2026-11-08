@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Structured Compose definition · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}Structured Compose definition</h1>
+{% include 'permission.html' %}
+  {% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+  {% if applied %}<p class="alert success">Structured definition saved. Original files and containers were not changed.</p><a href="/docker/stack-definitions/edit/{{ stack_name }}">Open structured editor</a>{% endif %}
+  {% if confirmation %}
+  <p>Compose resolves and normalizes the source files into a JSON document. Comments and YAML formatting are not retained in JSON. Original files remain available; future stack controls use the saved database structure.</p>
+  <details open><summary>Structured JSON preview</summary><pre>{{ conversion.definition|tojson(indent=2) }}</pre></details>
+  <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirmation" value="{{ confirmation }}"><button type="submit">Confirm conversion</button></form>
+  {% endif %}
+  <a href="/docker/stacks/compose/{{ stack_name }}">Back to stack</a>
+</section>
+{% endblock %}

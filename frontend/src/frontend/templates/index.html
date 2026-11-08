@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Dashboard</p>
+<h1>{{ icon('dashboard') }}Welcome, {{ user.username }}</h1>
+{% if password_change_required %}
+  <div class="alert warning" role="alert">Your password is temporary or expired. <a href="/password">Update it now</a>.</div>
+{% elif request.query_params.get('password_updated') %}
+  <div class="alert success" role="status">Your password has been updated.</div>
+{% endif %}
+<div class="dashboard-cards">
+  <section class="card" data-category="general">
+    <h2>General</h2>
+    <dl>
+      <div><dt>Account</dt><dd>{{ user.username }}</dd></div>
+      <div><dt>Role</dt><dd>{{ 'Administrator' if user.is_admin else 'User' }}</dd></div>
+      <div><dt>backend</dt><dd>{{ 'Connected' if daemon_status.available else 'Unavailable' }}</dd></div>
+      <div><dt>Endpoint</dt><dd><code>{{ daemon_endpoint_display }}</code></dd></div>
+      {% if daemon_status.available %}
+      <div><dt>Version</dt><dd>{{ daemon_status.version|default('Unknown') }}</dd></div>
+      {% endif %}
+    </dl>
+  </section>
+  {% if component_support.system %}
+  <section class="card" data-category="system">
+    <h2>System control</h2>
+    {% if daemon_status.available and daemon_status.get('system_access', 'readonly') != 'disabled' %}
+    <dl><div><dt>Access</dt><dd>{{ daemon_status.get('system_access', 'readonly') }}</dd></div>
+    <div><dt>Sysctl</dt><dd>{{ daemon_status.features.get('sysctl', 'disabled') }}</dd></div></dl>
+    <a href="/system">Open system overview</a>
+    {% else %}<p class="muted">{{ 'Disabled' if daemon_status.available else 'Service unavailable' }}</p>{% endif %}
+  </section>
+  {% endif %}
+  {% if component_support.network %}
+  <section class="card" data-category="network">
+    <h2>{{ network_title }}</h2>
+    {% if daemon_status.available and daemon_status.get('network_access', 'disabled') != 'disabled' %}
+    <dl>
+      <div><dt>Access</dt><dd>{{ daemon_status.network_access }}</dd></div>
+      {% for backend in ['network'] %}
+      {% if daemon_status.get('connections', {}).get(backend) %}
+      <div><dt>{{ backend|title }} path</dt><dd><code>{{ daemon_status.connections[backend] }}</code></dd></div>
+      {% endif %}
+      {% endfor %}
+      {% for feature, access in daemon_status.features.items() %}
+      {% if feature != 'sysctl' %}
+      <div><dt>{{ feature|title }}</dt><dd>{{ access }}</dd></div>
+      {% endif %}
+      {% endfor %}
+    </dl>
+    <a href="/network">Open network overview</a>
+    {% else %}<p class="muted">{{ 'Disabled' if daemon_status.available else 'Service unavailable' }}</p>{% endif %}
+  </section>
+  {% endif %}
+  {% if component_support.docker %}
+  <section class="card" data-category="docker">
+    <h2>{{ docker_title }}</h2>
+    {% if daemon_status.available and daemon_status.get('docker_access', 'disabled') != 'disabled' %}
+    <dl>
+      <div><dt>Access</dt><dd>{{ daemon_status.docker_access }}</dd></div>
+      <div><dt>Endpoint</dt><dd><code>{{ daemon_status.get('connections', {}).get('docker', 'Unknown') }}</code></dd></div>
+    </dl>
+    <p class="muted">Connection status and Engine details are available in the Docker overview.</p>
+    <a href="/docker">Open Docker overview</a>
+    {% else %}<p class="muted">{{ 'Disabled' if daemon_status.available else 'Service unavailable' }}</p>{% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

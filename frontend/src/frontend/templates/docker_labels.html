@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Labels · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Docker · Labels</p>
+<h1>{{ icon('labels') }}Labels</h1>
+{% include 'permission.html' %}
+<section id="labels-view" data-live="{{ 'true' if daemon_status.events else 'false' }}">
+  <p id="labels-status" role="status">Loading labels…</p>
+  <p id="labels-error" class="error" role="alert" hidden></p>
+  <div id="labels-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/labels.js').include_query_params(v=static_version) }}" defer></script>
+{% endblock %}

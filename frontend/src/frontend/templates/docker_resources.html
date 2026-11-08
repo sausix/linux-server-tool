@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ resource_kind|replace('_', ' ')|title }} · Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Docker</p>
+<h1>{{ icon(resource_kind) }}{{ resource_kind|replace('_', ' ')|title }}</h1>
+{% include 'permission.html' %}
+<section id="resources-view" data-kind="{{ resource_kind }}" data-live="{{ 'true' if daemon_status.events else 'false' }}">
+  <p id="resources-status" role="status">Loading resources…</p>
+  <p id="resources-error" class="error" role="alert" hidden></p>
+  <div id="resources-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/resources.js') }}" defer></script>
+{% endblock %}

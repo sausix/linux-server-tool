@@ -1,0 +1,105 @@
+# Docker-focused deployment without host-root, host-/etc or host namespace access.
+# Run from the checkout root with --project-directory . and --env-file .env.
+services:
+  frontend:
+    extends:
+      file: docs/deployment/compose.web.yaml
+      service: frontend
+    environment:
+      - DOCKER_SUPPORT=true
+      - NETWORK_SUPPORT=false
+      - SYSTEM_SUPPORT=false
+      - "${FRONTEND_ENV_PREFIX:-FRONTEND_}DAEMON_ENDPOINT=unix:///run/lsdfm/backend.sock"
+    depends_on:
+      backend:
+        condition: service_healthy
+  backend:
+    image: ${APPLICATION_IMAGE:-application:local}
+    command: ["backend"]
+    working_dir: /backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    init: true
+    restart: unless-stopped
+    user: "0:${BACKEND_SOCKET_GID:-2000}"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      # All component settings; defaults match compose.env.example.
+      - BACKEND_ENV_PREFIX=${BACKEND_ENV_PREFIX:-BACKEND_}
+      - "DOCKER_SUPPORT=true"
+      - "NETWORK_SUPPORT=false"
+      - "SYSTEM_SUPPORT=false"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}TRANSPORT=unix"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}UNIX_SOCKET=/run/lsdfm/backend.sock"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}SOCKET_MODE=${BACKEND_SOCKET_MODE:-0660}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}LISTEN_HOST=${BACKEND_LISTEN_HOST:-127.0.0.1}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}LISTEN_PORT=${BACKEND_LISTEN_PORT:-9876}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}ACCESS_TOKEN=${BACKEND_ACCESS_TOKEN:-${FRONTEND_DAEMON_TOKEN:-}}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}MAX_CLIENTS=${BACKEND_MAX_CLIENTS:-64}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}LOG_LEVEL=${BACKEND_LOG_LEVEL:-INFO}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_ACCESS=${BACKEND_DOCKER_ACCESS:-readonly}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}NETWORK_ACCESS=${BACKEND_NETWORK_ACCESS:-readonly}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}SYSTEM_ACCESS=${BACKEND_SYSTEM_ACCESS:-readonly}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}SYSTEM_HOST_ROOT="
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}INTERFACES_ACCESS=${BACKEND_INTERFACES_ACCESS:-rw}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}ROUTING_ACCESS=${BACKEND_ROUTING_ACCESS:-rw}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}FIREWALL_ACCESS=${BACKEND_FIREWALL_ACCESS:-ro}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}FIREWALL_BACKEND=${BACKEND_FIREWALL_BACKEND:-auto}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}SYSCTL_ACCESS=${BACKEND_SYSCTL_ACCESS:-ro}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_ENDPOINT=unix:///run/docker.sock"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_TIMEOUT_SECONDS=${BACKEND_DOCKER_TIMEOUT_SECONDS:-5.0}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_STORAGE_TIMEOUT_SECONDS=${BACKEND_DOCKER_STORAGE_TIMEOUT_SECONDS:-30.0}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_LOG_MAX_LINES=${BACKEND_DOCKER_LOG_MAX_LINES:-5000}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_LOG_DEFAULT_LINES=${BACKEND_DOCKER_LOG_DEFAULT_LINES:-200}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_LOG_MAX_STREAMS=${BACKEND_DOCKER_LOG_MAX_STREAMS:-32}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_LOG_DISCOVERY_INTERVAL_SECONDS=${BACKEND_DOCKER_LOG_DISCOVERY_INTERVAL_SECONDS:-2.0}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_API_VERSION=${BACKEND_DOCKER_API_VERSION:-auto}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_TLS_VERIFY=${BACKEND_DOCKER_TLS_VERIFY:-true}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_TLS_CA=${BACKEND_DOCKER_TLS_CA:-}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_TLS_CERT=${BACKEND_DOCKER_TLS_CERT:-}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}DOCKER_TLS_KEY=${BACKEND_DOCKER_TLS_KEY:-}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}STACK_DATABASE=${BACKEND_STACK_DATABASE:-/var/lib/lsdfm/backend/stacks.sqlite3}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_HOST_ROOT=/unavailable/compose-sources"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_HOST_READ_ONLY=true"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_ROOT=${BACKEND_COMPOSE_ROOT:-/var/lib/lsdfm/compose}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_ALLOWED_ROOTS=[\"${BACKEND_COMPOSE_ROOT:-/var/lib/lsdfm/compose}\"]"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_SEARCH_DIRECTORIES=[]"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMPOSE_COMMAND=${BACKEND_COMPOSE_COMMAND:-[\"docker\",\"compose\"]}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}STACK_CONTROL_TIMEOUT_SECONDS=${BACKEND_STACK_CONTROL_TIMEOUT_SECONDS:-120}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}STACK_MAX_CONCURRENT_JOBS=${BACKEND_STACK_MAX_CONCURRENT_JOBS:-2}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}STACK_STOP_TIMEOUT_SECONDS=${BACKEND_STACK_STOP_TIMEOUT_SECONDS:-10}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}NETWORKD_DIRECTORY=/unavailable/networkd"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}INTERFACES_FILE=/unavailable/interfaces"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}HOST_ETC_DIRECTORY=/unavailable/host-etc"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}COMMAND_TIMEOUT_SECONDS=${BACKEND_COMMAND_TIMEOUT_SECONDS:-15.0}"
+      - "${BACKEND_ENV_PREFIX:-BACKEND_}EVENTS_ENABLED=${BACKEND_EVENTS_ENABLED:-true}"
+    volumes:
+      - ${BACKEND_RUN_DIRECTORY:-./lsdfm-run}:/run/lsdfm
+      - type: bind
+        source: ${BACKEND_DOCKER_SOCKET_PATH:-/run/docker.sock}
+        target: /run/docker.sock
+        bind:
+          create_host_path: false
+      # Dedicated managed resources only; never bind the whole host for discovery.
+      - type: bind
+        source: ${BACKEND_COMPOSE_ROOT:-/var/lib/lsdfm/compose}
+        target: ${BACKEND_COMPOSE_ROOT:-/var/lib/lsdfm/compose}
+        bind:
+          create_host_path: false
+      - backend-state:/var/lib/lsdfm/backend
+    healthcheck:
+      test: ["CMD", "python", "-m", "backend.healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  frontend-data:
+    name: ${FRONTEND_DATA_VOLUME:-${COMPOSE_PROJECT_NAME}_frontend-data}
+  backend-state:
+    name: ${BACKEND_STATE_VOLUME:-${COMPOSE_PROJECT_NAME}_backend-state}

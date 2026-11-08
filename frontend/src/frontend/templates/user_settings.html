@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}User · Settings · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Settings · User</p><h1>{{ icon('account') }}User</h1>
+{% if required %}<p class="alert warning" role="alert">You must choose a new password before continuing. Updating your password signs out all sessions.</p>{% endif %}
+{% if enrollment_required and not required %}<p class="alert warning">Register a FIDO2 security key before accessing the application.</p>{% endif %}
+{% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+{% if notice %}<p class="alert success" role="status">{{ notice }}</p>{% endif %}
+<section class="card"><h2>Profile</h2>
+<p>Username: <strong>{{ user.username }}</strong></p>
+<form method="post" action="/settings/user/profile"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="display-name">Display name</label><input id="display-name" name="display_name" value="{{ profile.display_name }}" maxlength="128" autocomplete="name">
+<label for="contact-email">Contact email</label><input id="contact-email" name="email" type="email" value="{{ profile.email }}" maxlength="254" autocomplete="email">
+<p class="muted">Contact information is unverified and is not used for sign-in or account recovery.</p>
+<label for="profile-password">Current password (required to change email)</label><input id="profile-password" name="current_password" type="password" autocomplete="current-password" maxlength="256">
+<button type="submit">Save profile</button></form></section>
+<section class="card"><h2>Change password</h2>
+<form method="post" action="/settings/user/password"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="current-password">Current password</label><input id="current-password" name="current_password" type="password" autocomplete="current-password" maxlength="256" required>
+<label for="new-password">New password</label><input id="new-password" name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required>
+<label for="confirm-password">Confirm new password</label><input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required>
+<button type="submit">Update password and sign out everywhere</button></form></section>
+{% if not required %}
+<section class="card" data-security-keys data-mode="{{ mfa_mode }}" data-has-keys="{{ 'true' if keys else 'false' }}">
+<h2>Security keys · FIDO2 / WebAuthn</h2><p>Login policy: <strong>{{ mfa_mode }}</strong>. Security-key changes sign out all sessions.</p>
+<p class="muted">Use an external FIDO2 security key with user verification (PIN or biometrics). Keep a second key as a backup.</p>
+{% if keys %}<table><thead><tr><th>Name</th><th>Registered</th><th>Last used</th><th></th></tr></thead><tbody>
+{% for key in keys %}<tr><td>{{ key.name }}</td><td>{{ key.created_at }}</td><td>{{ key.last_used_at or 'Never' }}</td><td>{% if not (mfa_mode == 'required' and keys|length == 1) %}<button type="button" class="secondary" data-remove-key="{{ key.id }}">Remove</button>{% endif %}</td></tr>{% endfor %}
+</tbody></table>{% endif %}
+<form data-register-key><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="key-password">Current password for security-key changes</label><input id="key-password" name="current_password" type="password" autocomplete="current-password" maxlength="256" required>
+{% if mfa_mode != 'off' %}<label for="key-name">Security key name</label><input id="key-name" name="name" maxlength="80" placeholder="Backup key" required autocomplete="off">
+<button type="submit">Register security key</button>{% else %}<p class="muted">Registration and security-key sign-in are disabled by the login policy.</p>{% endif %}
+<p data-key-status role="status"></p></form></section>
+<section class="card"><h2>Active sessions</h2><table><thead><tr><th>Login method</th><th>Source IP</th><th>User agent</th><th>Created (UTC)</th></tr></thead><tbody>
+{% for session in active_sessions %}<tr><td>{{ session.login_method }}</td><td>{{ session.source_ip }}</td><td>{{ session.user_agent }}</td><td>{{ session.created_display }}</td></tr>{% endfor %}
+</tbody></table></section>
+<script src="{{ url_for('static', path='/security_keys.js').include_query_params(v=static_version) }}" defer></script>
+{% endif %}
+{% endblock %}

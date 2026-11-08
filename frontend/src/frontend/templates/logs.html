@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logs · {{ target_label }} · {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  <script src="{{ url_for('static', path='/session.js') }}" defer></script>
+  <script src="{{ url_for('static', path='/logs.js') }}" defer></script>
+</head>
+<body class="log-window" data-session-renew-seconds="{{ session_renew_seconds }}">
+  <header class="log-toolbar">
+    <strong>{{ app_name }} · Logs · {{ target_label }}</strong>
+    <form data-log-controls>
+      <label for="line-limit">Line limit</label><input id="line-limit" type="number" min="1" max="{{ max_lines }}" value="{{ log_target.limit }}" required>
+      <button type="submit">Fetch last lines</button>
+      <button type="button" data-log-live aria-pressed="false">Live</button>
+    </form>
+    <span data-log-status role="status">Loading…</span>
+    <span data-log-error class="error" role="alert" hidden></span>
+  </header>
+  <p class="log-note muted" data-log-note></p>
+  <main class="log-lines" tabindex="0" aria-label="Container logs"></main>
+  <script id="log-target" type="application/json">{{ log_target|tojson }}</script>
+</body>
+</html>

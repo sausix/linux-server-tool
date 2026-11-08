@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lsdfm-common"
+license = "MIT"
+version = "0.1.0"
+description = "Shared LSDFM code and protocols"
+requires-python = ">=3.12"
+dependencies = ["pydantic-settings>=2.6,<3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/common"]

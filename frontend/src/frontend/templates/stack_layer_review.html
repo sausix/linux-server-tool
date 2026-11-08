@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Review definition · {{ app_name }}{% endblock %}
+{% block content %}
+<section class="card"><p class="eyebrow">Docker · {{ stack_name }}</p><h1>{{ icon('stacks') }}Review definition</h1>
+{% include 'permission.html' %}
+{% if error %}<p class="alert error" role="alert">{{ display_path(error) }}</p>{% endif %}
+{% if confirmation %}
+{% set titles = {'initialize': 'Initialize stack management', 'duplicate': 'Duplicate', 'add': 'Derive definition', 'edit': 'Save definition', 'new': 'New Definition', 'activate': 'Set Active', 'delete': 'Delete'} %}
+<p>{{ titles.get(action, action) }}: <strong>{{ label or review.node_label }}</strong></p>
+{% if action == 'new' %}<p>Creates a standalone definition. No containers are started.</p>{% elif action in ['duplicate', 'add'] %}<p>The new definition is saved without changing Active. No containers are started.</p>{% elif action == 'delete' %}<p>The unused definition will be permanently removed. Source files and containers remain unchanged.</p>{% else %}<p>No containers are restarted. Changes take effect through an explicitly confirmed stack operation.</p>{% endif %}
+{% if review.assets %}<table><thead><tr><th>File</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody>{% for file in review.assets.files %}<tr><td>{{ file.path }}</td><td>{{ file.size }}</td><td><code>{{ file.sha256 }}</code></td></tr>{% endfor %}</tbody></table>{% endif %}
+{% if review.diff %}<pre>{{ review.diff }}</pre>{% endif %}
+{% if action == 'new' %}<details open><summary>Compose definition</summary><pre>{{ review.definition|tojson(indent=2) }}</pre></details>{% endif %}
+<form method="post" action="/docker/stack-models/{{ stack_name }}/change">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirmation" value="{{ confirmation }}">
+<button type="submit">{{ titles.get(action, action) }}</button>
+</form>
+{% endif %}
+{% if node and action in ['add', 'edit'] %}<a href="/docker/stack-models/{{ stack_name }}/edit/{{ node }}?mode={{ 'derive' if action == 'add' else 'edit' }}">Edit again</a>{% elif action == 'new' %}<a href="/docker/stack-models/{{ stack_name }}/new">Back to definition</a>{% endif %}
+<a href="/docker/stacks/compose/{{ stack_name }}">Back to stack</a></section>
+{% endblock %}

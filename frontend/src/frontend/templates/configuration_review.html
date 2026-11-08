@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Configuration · {{ category|title }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ 'System control' if category == 'system' else 'Network' }} · Configuration</p>
+<h1>{{ icon('configuration') }}Configuration</h1>
+{% include 'permission.html' %}
+<section id="configuration-review" data-category="{{ category }}" data-live="true">
+ <p id="configuration-status" role="status">Loading configuration…</p>
+ <p id="configuration-error" class="error" role="alert" hidden></p>
+ <div id="configuration-inventory"></div>
+</section>
+<script src="{{ url_for('static', path='/dom_updates.js') }}" defer></script>
+<script src="{{ url_for('static', path='/configuration_review.js').include_query_params(v=static_version) }}" defer></script>
+{% endblock %}

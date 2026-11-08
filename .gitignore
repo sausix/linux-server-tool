@@ -1,0 +1,51 @@
+# Local environments and credentials
+.venv/
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+.secrets/
+
+# IDE, interpreter and tool output
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.log
+
+# Runtime data and local test/deployment files
+/data/
+/testserver/
+/backend-run/
+/*-run/
+/compose.yaml
+/compose.yml
+/compose.local.*
+/compose.override.*
+/docker-compose.override.*
+/main.py
+/MAINTAINER.md
+*.db
+*.db-*
+*.sqlite3
+*.sqlite3-*
+
+# Generated packages; uv.lock is intentionally included.
+dist/
+build/
+*.egg-info/
+
+# Transient release-tool coordination and atomic-write files.
+.version-bump.lock
+.release-version-*

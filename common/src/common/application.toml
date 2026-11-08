@@ -1,0 +1,8 @@
+# Display branding and stable compatibility identifiers.
+name = "LSDFM"
+storage-id = "lsdfm"
+legacy-frontend-prefix = "LSDFM_"
+legacy-backend-prefix = "LSDFMD_"
+legacy-backend-directory = "lsdfmd"
+session-cookie = "lsdfm_session"
+session-salt = "lsdfm-server-session"

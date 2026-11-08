@@ -1,0 +1,11 @@
+{% macro display(value) -%}
+  {% if value is sameas true %}Yes{% elif value is sameas false %}No{% elif value is none %}Unknown{% elif value is sequence and value is not string %}{{ value|join(', ') }}{% else %}{{ value }}{% endif %}
+{%- endmacro %}
+
+{% from 'ui/macros.html' import icon with context %}
+
+{% macro stack_controls(kind, name, writable) -%}
+{% if writable %}<div class="stack-controls" role="toolbar" aria-label="Stack controls">
+{% for action in ['start', 'stop', 'restart'] + (['apply'] if kind != 'swarm' else []) %}<a class="button" href="{{ request.url_for('stack_action_page', kind=kind, name=name, action=action) }}">{{ action|title }}</a>{% endfor %}
+</div>{% endif %}
+{%- endmacro %}

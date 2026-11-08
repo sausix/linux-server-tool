@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'docker_macros.html' import display %}
+{% block title %}Docker · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>{{ icon('docker') }}Docker</h1>
+{% include 'permission.html' %}
+<section class="card">
+  <h2>Connection</h2>
+  <table>
+    <tr><th>Endpoint</th><td><code>{{ overview.endpoint }}</code></td></tr>
+    <tr><th>Status</th><td class="{{ 'persistent' if overview.reachable else 'error' }}">{{ 'Connected' if overview.reachable else 'Unavailable' }}</td></tr>
+  </table>
+  {% for error in overview.errors %}<p class="alert warning" role="alert">{{ error }}</p>{% endfor %}
+  <a href="/docker" class="button">Refresh</a>
+  <a href="/docker/configuration" class="button secondary">Configuration</a>
+</section>
+{% for section, title in [('version', 'Engine version')] %}
+<section class="card docker-section">
+  <h2>{{ title }}</h2>
+  {% if overview[section] %}
+  <table>
+    {% for key, value in overview[section].items() %}
+    <tr><th>{{ key }}</th><td>{{ display(value) }}{% if key == 'MemTotal' %} bytes{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Not available from the endpoint.</p>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}
